@@ -88,7 +88,7 @@ sections are mandatory. Good enough to read cold six months later and have every
 ```
 ~/CLookout/
 ├── src/
-│   ├── main.c          ← entry point (Phase 5 version — exercises AppData)
+│   ├── main.c          ← entry point (Phase 6 version — two-panel ncurses layout)
 │   ├── device.c        ← Device implementation ✓
 │   ├── incident.c      ← Incident implementation ✓
 │   ├── todo.c          ← Todo implementation ✓
@@ -275,21 +275,29 @@ int main(void) {
   clangd configured via compile_commands.json (generated with `bear make`).
   Project pushed to GitHub via SSH key authentication.
 
+- **Phase 6** — ncurses Fundamentals ✓ (docs/PHASE_06_README.md)
+  initscr/endwin lifecycle, noecho/cbreak/keypad, start_color/init_color/init_pair,
+  Catppuccin Mocha palette (0-1000 scaling), LINES/COLS, mvprintw/mvwprintw,
+  box, newwin/wrefresh/delwin, w-prefix window functions, correct refresh order
+  (stdscr first, windows on top), getch event loop, KEY_UP/DOWN/LEFT/RIGHT.
+  NOTE: libncurses5-dev installed. Makefile updated with -lncurses link flag.
+  Two-panel layout (nav + main) working with colors.
+
 ---
 
-## CURRENT PHASE: PHASE 6 — NCURSES FUNDAMENTALS
+## CURRENT PHASE: PHASE 7 — THE LAYOUT ENGINE
 
 ### WHAT TO DO RIGHT NOW:
-Begin Phase 6 — take over the terminal with ncurses.
-Install ncurses dev library, link it in the Makefile, write a minimal
-ncurses program that initializes the screen and responds to a keypress.
+Build the permanent three-panel layout: nav (left), main content (center),
+detail/AI panel (right), and a status bar at the bottom. Extract layout
+constants, write a layout_create / layout_free lifecycle, and wire it to
+the AppData domain layer so real data can be rendered in Phase 10.
 
 ---
 
 ## REMAINING PHASES
 
-- Phase 6  — ncurses Fundamentals (take over the terminal) ← IN PROGRESS
-- Phase 6  — ncurses Fundamentals (take over the terminal)
+- Phase 7  — The Layout Engine (three-panel layout) ← IN PROGRESS
 - Phase 7  — The Layout Engine (three-panel layout)
 - Phase 8  — The Event Loop and Input Handling
 - Phase 9  — JSON with cJSON
