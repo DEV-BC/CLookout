@@ -6,10 +6,19 @@
 #define NAV_WIDTH 20
 #define DETAIL_WIDTH 35
 
+typedef enum {
+    SECTION_DEVICES,
+    SECTION_INCIDENTS,
+    SECTION_TODOS,
+    SECTION_AI
+} Section;
+
 typedef struct {
     WINDOW *nav;
     WINDOW *main_panel;
     WINDOW *detail;
+    Section active;
+    int cursor;
 } Layout;
 
 Layout *layout_create(void);

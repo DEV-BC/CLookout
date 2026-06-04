@@ -1,8 +1,21 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <ncurses.h>
 #include "layout.h"
 #include "colors.h"
+
+static const char *section_names[] = {
+    "Devices",
+    "Incidents",
+    "Todos",
+    "AI"
+};
+
+static const char *nav_items[] = {
+    "[D] Devices",
+    "[I] Incidents",
+    "[T] Todos",
+    "[A] AI"
+};
 
 Layout *layout_create(void) {
     Layout *l = malloc(sizeof(Layout));
@@ -20,25 +33,46 @@ Layout *layout_create(void) {
     wbkgd(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
     wbkgd(l->detail,     COLOR_PAIR(PAIR_NORMAL));
 
+    l->active = SECTION_DEVICES;
+    l->cursor = 0;
+
     return l;
 }
 
 void layout_draw(const Layout *l) {
+    werase(l->nav);
     box(l->nav,        0, 0);
+    for (int i = 0; i < 4; i++) {
+        if (i == (int)l->active) {
+            wattron(l->nav, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+        } else {
+            wattron(l->nav, COLOR_PAIR(PAIR_NAV));
+        }
+         mvwprintw(l->nav, i + 1, 2, "%s", nav_items[i]);
+        wattroff(l->nav, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+    }
+     werase(l->main_panel);
     box(l->main_panel, 0, 0);
-    box(l->detail,     0, 0);
-
-    wattron(l->nav, COLOR_PAIR(PAIR_NAV));
-    mvwprintw(l->nav, 1, 2, "[D] Devices");
-    mvwprintw(l->nav, 2, 2, "[I] Incidents");
-    mvwprintw(l->nav, 3, 2, "[T] Todos");
-    mvwprintw(l->nav, 4, 2, "[A] AI");
-    wattroff(l->nav, COLOR_PAIR(PAIR_NAV));
-
     wattron(l->main_panel, COLOR_PAIR(PAIR_TITLE));
-    mvwprintw(l->main_panel, 1, 2, "Devices");
+    mvwprintw(l->main_panel, 1, 2, "%s", section_names[l->active]);
     wattroff(l->main_panel, COLOR_PAIR(PAIR_TITLE));
 
+    const char *placeholder[] = {
+        "item-01", "item-02", "item-03",
+        "item-04", "item-05", "item-06"
+    };
+    for (int i = 0; i < 6; i++) {
+        if (i == l->cursor) {
+            wattron(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+        } else {
+            wattron(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
+        }
+        mvwprintw(l->main_panel, i + 3, 2, "%s", placeholder[i]);
+        wattroff(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+    }
+
+    werase(l->detail);
+    box(l->detail, 0, 0);
     wattron(l->detail, COLOR_PAIR(PAIR_TITLE));
     mvwprintw(l->detail, 1, 2, "Detail");
     wattroff(l->detail, COLOR_PAIR(PAIR_TITLE));
