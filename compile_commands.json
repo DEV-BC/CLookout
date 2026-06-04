@@ -1,0 +1,21 @@
+[
+    {
+        "arguments": [
+            "gcc",
+            "-c",
+            "-std=c11",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-g",
+            "-fsanitize=undefined",
+            "-I",
+            "include",
+            "-o",
+            "build/incident.o",
+            "src/incident.c"
+        ],
+        "directory": "/home/devbc/CLookout",
+        "file": "src/incident.c"
+    }
+]

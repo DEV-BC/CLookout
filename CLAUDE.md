@@ -1,0 +1,347 @@
+# Sentinel-C — Claude Code Project Context
+
+> This file is loaded automatically by Claude Code every session.
+> Update the CURRENT PHASE section as phases complete.
+
+---
+
+## PROJECT
+
+**Sentinel-C** — a terminal user interface (TUI) ops dashboard written in C using ncurses.
+Covers: Devices, Incidents, Todos, AI assistant chat panel.
+
+This is the fourth version of this dashboard:
+- Sentinel    — C# Blazor Server web app (completed)
+- Lookout     — Zig TUI using libvaxis (in progress)
+- Watchtower  — Odin TUI raw without a framework (in progress)
+- Sentinel-C  — C TUI using ncurses (this project)
+
+---
+
+## WHO I AM
+
+Brandon Carr. Fifth programming project overall. My only completed project is Sentinel (C# Blazor).
+I understand variables, functions, structs, basic error handling, and how a web app is structured.
+I have built things in Zig (Shell + Lookout) and Odin (Watchtower) so I understand allocators,
+slices, and pointers conceptually — but I have not done systems-level work in C before.
+
+**I do not yet know:** raw C pointers, C memory management, or how the terminal works at the C level.
+Treat me as a beginner to all of that.
+
+---
+
+## DEVELOPMENT ENVIRONMENT
+
+- OS: Windows 11 with WSL 2 (Ubuntu 20.04)
+- IDE: VS Code with Remote-WSL extension (switched from CLion due to WSL header issues)
+- Compiler: gcc 9.4.0 (inside WSL)
+- Build system: GNU Make 4.2.1 (inside WSL)
+- Project path (Linux filesystem): ~/CLookout  ← ACTIVE — use this
+- Project path (old Windows path): /mnt/c/Users/bgnol/Desktop/CLookout  ← do not use
+- All compile/run commands run in the WSL terminal: `make run`, `make clean`
+
+**IMPORTANT — how to open this project correctly:**
+- Open VS Code from the WSL terminal: `cd ~/CLookout && code .`
+- Open Claude Code from the WSL terminal as well (not from Windows)
+- VS Code bottom-left must show "WSL: Ubuntu-20.04" — if it doesn't, reopen via WSL terminal
+- IntelliSense config is at ~/CLookout/.vscode/c_cpp_properties.json
+- C/C++ extension (ms-vscode.cpptools) must be installed in WSL context, not just Windows
+
+---
+
+## TEACHING PHILOSOPHY — FOLLOW THIS EXACTLY
+
+I always ask "but WHY though?" — always answer fully, never brush it off.
+**Explanations come BEFORE code. Always. Never drop code without context.**
+
+Use this three-layer structure for every new concept:
+
+  🟢 Simple — a real-world analogy anyone could understand. Zero jargon.
+  🟡 Real   — how it actually works in C / the OS / the computer
+  🔴 Deep   — why it's designed this way, tradeoffs, what senior engineers debate.
+               Only when relevant or when I ask.
+
+I type everything myself. You explain, I type it, I run it, I tell you what I see, we continue.
+**Never create files for me automatically — tell me what to create and type.**
+One concept at a time. Never introduce two new concepts simultaneously.
+After every piece of code: tell me the exact command to run to verify it.
+
+Always draw all four bridges at every concept:
+  "In C# / Sentinel you did X"
+  "In Zig (Shell/Lookout) you did Y"
+  "In Odin (Watchtower) you did Z"
+  "In C we do W — and this is what all three were secretly doing anyway"
+
+Always show the danger: when C can silently corrupt memory, crash, or produce
+undefined behavior — and exactly how to avoid it.
+
+Use ASCII diagrams whenever a picture helps more than words.
+
+**At the end of every phase, automatically generate PHASE_XX_README.md in the docs/ folder.**
+Follow the exact structure of PHASE_01_README.md. The ☠️ Danger Zone and 🐛 Troubleshooting
+sections are mandatory. Good enough to read cold six months later and have everything click back.
+
+---
+
+## CURRENT PROJECT STRUCTURE
+
+```
+~/CLookout/
+├── src/
+│   ├── main.c          ← entry point (Phase 4 version — Device only, needs Phase 5 update)
+│   ├── device.c        ← Device implementation ✓
+│   ├── incident.c      ← MISSING — needs to be created (Phase 5 step 2)
+│   ├── memory.c        ← Phase 2 demo (not linked in current build)
+│   └── strings.c       ← Phase 3 demo (not linked in current build)
+├── include/
+│   ├── device.h        ← Device struct + function prototypes ✓
+│   └── incident.h      ← Incident struct + Severity enum + prototypes ✓
+├── .vscode/
+│   └── c_cpp_properties.json  ← IntelliSense config for VS Code + WSL
+├── build/              ← compiled output
+├── docs/
+│   ├── PHASE_00_WHAT_IS_C.md
+│   ├── PHASE_01_README.md
+│   ├── PHASE_02_README.md
+│   ├── PHASE_03_README.md
+│   ├── PHASE_04_README.md      ✓ generated
+│   └── CONTINUATION_PROMPT.md ← legacy, superseded by this file
+└── Makefile            ← needs Phase 5 update (add incident.c to SRCS)
+```
+
+---
+
+## CURRENT FILE CONTENTS
+
+### Makefile (current — needs update for Phase 5)
+```makefile
+CC     = gcc
+CFLAGS = -std=c11 -Wall -Wextra -Werror -g -fsanitize=undefined -I include
+TARGET = build/sentinel-c
+SRCS   = src/main.c src/device.c
+OBJS   = $(patsubst src/%.c,build/%.o,$(SRCS))
+
+.PHONY: all clean run
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	mkdir -p build
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
+
+build/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f build/*.o $(TARGET)
+
+run: $(TARGET)
+	./$(TARGET)
+```
+
+### include/device.h
+```c
+#ifndef DEVICE_H
+#define DEVICE_H
+
+typedef struct {
+    int  id;
+    char name[64];
+    int  online;
+} Device;
+
+Device *device_create(int id, const char *name);
+void    device_print(const Device *dev);
+void    device_free(Device *dev);
+
+#endif
+```
+
+### src/device.c
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "device.h"
+
+Device *device_create(int id, const char *name) {
+    Device *dev = malloc(sizeof(Device));
+    if (dev == NULL) return NULL;
+    dev->id     = id;
+    dev->online = 0;
+    snprintf(dev->name, sizeof(dev->name), "%s", name);
+    return dev;
+}
+
+void device_print(const Device *dev) {
+    printf("Device %d: %-20s [%s]\n",
+           dev->id, dev->name,
+           dev->online ? "online" : "offline");
+}
+
+void device_free(Device *dev) {
+    free(dev);
+}
+```
+
+### include/incident.h
+```c
+#ifndef INCIDENT_H
+#define INCIDENT_H
+
+typedef enum {
+    SEVERITY_LOW,
+    SEVERITY_MEDIUM,
+    SEVERITY_HIGH,
+    SEVERITY_CRITICAL
+} Severity;
+
+const char *severity_str(Severity s);
+
+typedef struct {
+    int      id;
+    char     title[128];
+    Severity severity;
+    int      resolved;
+} Incident;
+
+Incident *incident_create(int id, const char *title, Severity severity);
+void      incident_print(const Incident *inc);
+void      incident_free(Incident *inc);
+
+#endif
+```
+
+### src/main.c (current — needs Phase 5 update)
+```c
+#include <stdio.h>
+#include "device.h"
+
+int main(void) {
+    Device *dev = device_create(1, "server-01");
+    if (dev == NULL) return 1;
+
+    device_print(dev);
+    dev->online = 1;
+    device_print(dev);
+
+    device_free(dev);
+    dev = NULL;
+
+    return 0;
+}
+```
+
+---
+
+## PHASES COMPLETED
+
+- **Phase 0** — Pre-Study (docs/PHASE_00_WHAT_IS_C.md) ✓
+  What C is, why it exists, compilation model, four-way bridge
+
+- **Phase 1** — C From Zero + The Compilation Model ✓
+  hello.c → main.c, Makefile, project structure, gcc flags, WSL setup
+
+- **Phase 2** — Pointers and Memory ✓
+  RAM, addresses, little-endian, hex, registers, pointers (&/*), stack,
+  heap, malloc/free, use-after-free, void*, sizeof, typedef struct, ->
+  NOTE: -fsanitize=address removed — crashes on WSL2 (DEADLYSIGNAL).
+  Only -fsanitize=undefined remains. valgrind planned for Phase 18.
+
+- **Phase 3** — Strings in C ✓
+  Null terminator, strlen vs sizeof, literals vs char arrays, segfault
+  on literal write, strncpy + manual \0, snprintf (preferred), strcmp.
+  NOTE: -Werror=format-truncation fires if snprintf buffer is provably
+  too small at compile time. Size buffers correctly or suppress with pragma.
+
+- **Phase 4** — Structs, Headers, and Project Structure ✓ (docs/PHASE_04_README.md)
+  Headers as text paste, .h vs .c, include guards, -I include flag,
+  const on pointer params, Device struct, device_create/print/free pattern,
+  struct padding/alignment, multi-file build pipeline (compile → .o → link)
+
+---
+
+## CURRENT PHASE: PHASE 5 — THE DOMAIN LAYER
+
+### What has been covered this phase:
+- Enums in C (typedef enum, named integer constants, four-bridge comparison)
+- Severity enum: SEVERITY_LOW / MEDIUM / HIGH / CRITICAL
+- severity_str() helper (returns const char* to string literal — no malloc)
+- Incident struct: id, title[128], severity, resolved
+- incident_create / incident_print / incident_free prototypes (in header)
+- include/incident.h created ✓
+
+### WHERE WE LEFT OFF:
+incident.h is written. Stopped to fix VS Code / IntelliSense / WSL setup.
+Project moved from /mnt/c/ (Windows filesystem) to ~/CLookout (Linux filesystem)
+for better performance and IntelliSense support.
+
+### WHAT TO DO RIGHT NOW:
+Resume Phase 5 — Step 2: create src/incident.c (the implementation).
+Then Step 3: update src/main.c to test Incident.
+Then Step 4: update Makefile SRCS to include src/incident.c.
+Then: Todo struct, ChatMessage struct, fixed-size array lists.
+
+---
+
+## REMAINING PHASES
+
+- Phase 5  — The Domain Layer (Incident, Todo, Chat structs + arrays) ← IN PROGRESS
+- Phase 6  — ncurses Fundamentals (take over the terminal)
+- Phase 7  — The Layout Engine (three-panel layout)
+- Phase 8  — The Event Loop and Input Handling
+- Phase 9  — JSON with cJSON
+- Phase 10 — Devices Panel (first full vertical slice)
+- Phase 11 — Incident Manager
+- Phase 12 — Todo Panel
+- Phase 13 — POSIX Threads and the Live Clock
+- Phase 14 — BSD Sockets and the AI Assistant
+- Phase 15 — Streaming AI Responses
+- Phase 16 — SQLite via Direct C API
+- Phase 17 — Data Structures Deep Dive
+- Phase 18 — Memory Audit and valgrind
+- Phase 19 — Testing C Code
+- Phase 20 — Polish and Release
+
+---
+
+## APP DESIGN — CATPPUCCIN MOCHA
+
+```
+Background:    #1e1e2e  (base)      RGB(30,  30,  46)
+Surface:       #313244  (surface0)  RGB(49,  50,  68)
+Accent pink:   #f38ba8  (red)       RGB(243, 139, 168)
+Accent teal:   #94e2d5  (teal)      RGB(148, 226, 213)
+Accent yellow: #f9e2af  (yellow)    RGB(249, 226, 175)
+Muted text:    #6c7086  (overlay0)  RGB(108, 112, 134)
+Bright text:   #cdd6f4  (text)      RGB(205, 214, 244)
+```
+
+Layout — three-panel TUI:
+```
+┌─────────────┬──────────────────────┬─────────────────┐
+│  Navigation │   Main Content       │  Detail / AI    │
+│ [D] Devices │  (list / table)      │  (selected item │
+│ [I] Incidents│                     │   or chat)      │
+│ [T] Todos   │                      │                 │
+│ [A] AI      │                      │                 │
+├─────────────┴──────────────────────┴─────────────────┤
+│  Status bar: [user]  [section]  [keybinds]  [clock]  │
+└──────────────────────────────────────────────────────┘
+```
+
+---
+
+## KEY DECISIONS LOG
+
+| Decision | Reason |
+|---|---|
+| -fsanitize=address removed | Crashes on WSL2 with DEADLYSIGNAL before any user code runs |
+| -fsanitize=undefined kept | Works correctly on WSL2 |
+| valgrind for memory audit | Planned for Phase 18 — works on WSL2 |
+| snprintf over strcpy | strcpy has no size limit — use snprintf always |
+| patsubst over substitution reference | Substitution reference strips slashes on some Make versions |
+| mkdir -p build in $(TARGET) recipe | build/ dir not created automatically |
+| VS Code + Remote-WSL over CLion | CLion had persistent WSL header resolution issues |
+| Project moved to ~/CLookout | /mnt/c/ path crosses WSL filesystem boundary — slow builds, broken IntelliSense |
+| Open VS Code via `code .` from WSL terminal | Ensures extension host runs in WSL context, not Windows |
