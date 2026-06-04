@@ -1,64 +1,42 @@
 #include <stdio.h>
-#include <time.h>
-#include "chat.h"
-#include "device.h"
-#include "incident.h"
-#include "todo.h"
-
+#include "app_data.h"
 
 int main(void) {
+    AppData data = {0};
 
-    Device *dev = device_create(1, "server-01");
-    if (dev == NULL) return 1;
+    data.devices[data.device_count++] = device_create(1, "server-01");
+    data.devices[data.device_count++] = device_create(2, "router-02");
+    data.devices[data.device_count++] = device_create(3, "switch-03");
+    data.devices[1]->online = 1;
 
-    device_print(dev);
+    printf("=== Devices ===\n");
+    for (int i = 0; i < data.device_count; i++) {
+        device_print(data.devices[i]);
+    }
 
-    dev->online = 1;
-    device_print(dev);
+    data.incidents[data.incident_count++] = incident_create(1, "Database connection dropped", SEVERITY_HIGH);
+    data.incidents[data.incident_count++] = incident_create(2, "Disk usage at 94%", SEVERITY_CRITICAL);
+    data.incidents[0]->status = STATUS_INVESTIGATING;
 
-    device_free(dev);
-    dev = NULL;
+    printf("\n=== Incidents ===\n");
+    for (int i = 0; i < data.incident_count; i++) {
+        incident_print(data.incidents[i]);
+    }
 
-     printf("\n");
+    data.todos[data.todo_count++] = todo_create(1, "Review server logs", 2);
+    data.todos[data.todo_count++] = todo_create(2, "Update firewall rules", 3);
+    data.todos[0]->done = 1;
 
-    Incident *inc = incident_create(1, "Database connection dropped", SEVERITY_HIGH);
-    if (inc == NULL) return 1;
-    incident_print(inc);
-    inc->status = STATUS_INVESTIGATING;
-    incident_print(inc);
+    printf("\n=== Todos ===\n");
+    for (int i = 0; i < data.todo_count; i++) {
+        todo_print(data.todos[i]);
+    }
 
-    incident_free(inc);
-    inc = NULL;
-
-
-    printf("\n");
-
-    Todo *t = todo_create(1, "Review Server Logs", 2);
-    if (t == NULL) return 1;
-    todo_print(t);
-    t->done = 1;
-    todo_print(t);
-
-    todo_free(t);
-
-    t = NULL;
-
-     printf("\n");
-
-     ChatMessage *m1 = chat_message_create(ROLE_USER, "What is wrong with the database?");
-     ChatMessage *m2 = chat_message_create(ROLE_ASSISTANT, "The connection pool is exhausted.");
-     if (m1 == NULL || m2 == NULL) {
-        return 1;
-     }
-
-     chat_message_print(m1);
-     chat_message_print(m2);
-
-    chat_message_free(m1);
-    chat_message_free(m2);
-    m1 = NULL;
-    m2 = NULL;
+    for (int i = 0; i < data.device_count;   i++) device_free(data.devices[i]);
+    for (int i = 0; i < data.incident_count; i++) incident_free(data.incidents[i]);
+    for (int i = 0; i < data.todo_count;     i++) todo_free(data.todos[i]);
 
     return 0;
 }
+
 
