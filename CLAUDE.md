@@ -88,7 +88,7 @@ sections are mandatory. Good enough to read cold six months later and have every
 ```
 ~/CLookout/
 ├── src/
-│   ├── main.c          ← entry point (Phase 6 version — two-panel ncurses layout)
+│   ├── main.c          ← entry point (Phase 7 version — three-panel layout engine)
 │   ├── device.c        ← Device implementation ✓
 │   ├── incident.c      ← Incident implementation ✓
 │   ├── todo.c          ← Todo implementation ✓
@@ -283,22 +283,25 @@ int main(void) {
   NOTE: libncurses5-dev installed. Makefile updated with -lncurses link flag.
   Two-panel layout (nav + main) working with colors.
 
+- **Phase 7** — The Layout Engine ✓ (docs/PHASE_07_README.md)
+  colors.h/colors.c module (C_ prefix to avoid ncurses collision, colors_init()),
+  layout.h/layout.c module (Layout struct, three WINDOW pointers, NAV_WIDTH=20,
+  DETAIL_WIDTH=35, main_width calculated), layout_create/draw/refresh/free,
+  window-relative coordinates. main.c reduced to 20 lines.
+
 ---
 
-## CURRENT PHASE: PHASE 7 — THE LAYOUT ENGINE
+## CURRENT PHASE: PHASE 8 — THE EVENT LOOP AND INPUT HANDLING
 
 ### WHAT TO DO RIGHT NOW:
-Build the permanent three-panel layout: nav (left), main content (center),
-detail/AI panel (right), and a status bar at the bottom. Extract layout
-constants, write a layout_create / layout_free lifecycle, and wire it to
-the AppData domain layer so real data can be rendered in Phase 10.
+Build the full event loop: active panel tracking, routing keypresses to the
+correct panel handler, panel switching with D/I/T/A keys, and redrawing.
 
 ---
 
 ## REMAINING PHASES
 
-- Phase 7  — The Layout Engine (three-panel layout) ← IN PROGRESS
-- Phase 7  — The Layout Engine (three-panel layout)
+- Phase 8  — The Event Loop and Input Handling ← IN PROGRESS
 - Phase 8  — The Event Loop and Input Handling
 - Phase 9  — JSON with cJSON
 - Phase 10 — Devices Panel (first full vertical slice)

@@ -1,7 +1,7 @@
 CC 	= gcc
 CFLAGS 	= -std=c11 -Wall -Wextra -Werror -g -fsanitize=undefined -I include
 TARGET 	= build/sentinel-c
-SRCS 	= src/main.c src/device.c src/incident.c src/todo.c src/chat.c
+SRCS 	= src/main.c src/device.c src/incident.c src/todo.c src/chat.c src/colors.c src/layout.c
 OBJS 	= $(patsubst src/%.c,build/%.o,$(SRCS))
 
 .PHONY: all clean run
