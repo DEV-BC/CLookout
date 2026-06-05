@@ -61,13 +61,22 @@ int main(void) {
             case 'i': case 'I': l->active = SECTION_INCIDENTS; l->cursor = 0; break;
             case 't': case 'T': l->active = SECTION_TODOS;     l->cursor = 0; break;
             case 'a': case 'A': l->active = SECTION_AI;        l->cursor = 0; break;
-            case '\n':
-                case KEY_ENTER:
-                if (l->active == SECTION_DEVICES && data.device_count > 0) {
-                    data.devices[l->cursor]->online ^= 1;
+        case ' ':
+                if (l->active == SECTION_TODOS && data.todo_count > 0) {
+                    data.todos[l->cursor]->done ^= 1;
                 }
                 break;
-
+            case '\n':
+            case KEY_ENTER:
+                if (l->active == SECTION_DEVICES && data.device_count > 0) {
+                    data.devices[l->cursor]->online ^= 1;
+                } else if (l->active == SECTION_INCIDENTS && data.incident_count > 0) {
+                    data.incidents[l->cursor]->status =
+                        (data.incidents[l->cursor]->status + 1) % 3;
+                } else if (l->active == SECTION_TODOS && data.todo_count > 0) {
+                    data.todos[l->cursor]->done ^= 1;
+                }
+                break;
             case KEY_UP:   if (l->cursor > 0) l->cursor--; break;
             case KEY_DOWN: {
             int counts[] = {

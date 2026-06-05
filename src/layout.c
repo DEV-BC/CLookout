@@ -11,6 +11,16 @@ static const char *section_names[] = {
     "AI"
 };
 
+static int severity_pair(Severity s) {
+    switch (s) {
+        case SEVERITY_LOW:      return PAIR_STATUS;
+        case SEVERITY_MEDIUM:   return PAIR_NORMAL;
+        case SEVERITY_HIGH:     return PAIR_TITLE;
+        case SEVERITY_CRITICAL: return PAIR_TITLE;
+        default:                return PAIR_NORMAL;
+    }
+}
+
 static const char *nav_items[] = {
     "[D] Devices",
     "[I] Incidents",
@@ -73,48 +83,76 @@ void layout_draw(const Layout *l, const AppData *data) {
     
     } else if (l->active == SECTION_INCIDENTS) {
         for (int i = 0; i < data->incident_count; i++) {
+            int pair = severity_pair(data->incidents[i]->severity);
             if (i == l->cursor)
-                wattron(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+                wattron(l->main_panel, COLOR_PAIR(pair) | A_REVERSE);
             else
-                wattron(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
-            mvwprintw(l->main_panel, i + 3, 2, "%-30s [%s]",
+                wattron(l->main_panel, COLOR_PAIR(pair));
+            mvwprintw(l->main_panel, i + 3, 2, "%-32s [%s]",
                       data->incidents[i]->title,
-                      data->incidents[i]->status == STATUS_RESOLVED ? "resolved" : "open");
-            wattroff(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+                      data->incidents[i]->status == STATUS_RESOLVED
+                          ? "resolved" : "open");
+            wattroff(l->main_panel, COLOR_PAIR(pair) | A_REVERSE);
         }
     } else if (l->active == SECTION_TODOS) {
         for (int i = 0; i < data->todo_count; i++) {
+            int pair = data->todos[i]->done ? PAIR_STATUS : PAIR_NORMAL;
             if (i == l->cursor)
-                wattron(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+                wattron(l->main_panel, COLOR_PAIR(pair) | A_REVERSE);
             else
-                wattron(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
+                wattron(l->main_panel, COLOR_PAIR(pair));
             mvwprintw(l->main_panel, i + 3, 2, "[%c] P%d  %s",
                       data->todos[i]->done ? 'x' : ' ',
                       data->todos[i]->priority,
                       data->todos[i]->title);
-            wattroff(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+            wattroff(l->main_panel, COLOR_PAIR(pair) | A_REVERSE);
         }
     }
 
    werase(l->detail);
     box(l->detail, 0, 0);
     wattron(l->detail, COLOR_PAIR(PAIR_TITLE));
-    mvwprintw(l->detail, 1, 2, "Device Detail");
+     const char *detail_titles[] = { "Device Detail", "Incident Detail", "Todo Detail", "AI Chat" };
+    mvwprintw(l->detail, 1, 2, "%s", detail_titles[l->active]);
     wattroff(l->detail, COLOR_PAIR(PAIR_TITLE));
 
-    if (l->active == SECTION_DEVICES && data->device_count > 0) {
+     if (l->active == SECTION_DEVICES && data->device_count > 0) {
         Device *sel = data->devices[l->cursor];
         int pair = sel->online ? PAIR_NAV : PAIR_STATUS;
-
         mvwprintw(l->detail, 3, 2, "ID:     %d", sel->id);
-
         wattron(l->detail, COLOR_PAIR(PAIR_TITLE));
         mvwprintw(l->detail, 4, 2, "Name:   %s", sel->name);
         wattroff(l->detail, COLOR_PAIR(PAIR_TITLE));
-
         wattron(l->detail, COLOR_PAIR(pair));
         mvwprintw(l->detail, 5, 2, "Status: %s",
                   sel->online ? "ONLINE" : "OFFLINE");
+        wattroff(l->detail, COLOR_PAIR(pair));
+
+    } else if (l->active == SECTION_INCIDENTS && data->incident_count > 0) {
+        Incident *sel = data->incidents[l->cursor];
+        int pair = severity_pair(sel->severity);
+        const char *sev[] = { "LOW", "MEDIUM", "HIGH", "CRITICAL" };
+        const char *sta[] = { "OPEN", "INVESTIGATING", "RESOLVED" };
+        mvwprintw(l->detail, 3, 2, "ID:       %d", sel->id);
+        wattron(l->detail, COLOR_PAIR(PAIR_TITLE));
+        mvwprintw(l->detail, 4, 2, "Title:");
+        mvwprintw(l->detail, 5, 2, "  %.28s", sel->title);
+        wattroff(l->detail, COLOR_PAIR(PAIR_TITLE));
+        wattron(l->detail, COLOR_PAIR(pair));
+        mvwprintw(l->detail, 6, 2, "Severity: %s", sev[sel->severity]);
+        wattroff(l->detail, COLOR_PAIR(pair));
+        mvwprintw(l->detail, 7, 2, "Status:   %s", sta[sel->status]);
+    } else if (l->active == SECTION_TODOS && data->todo_count > 0) {
+        Todo *sel = data->todos[l->cursor];
+        int pair = sel->done ? PAIR_STATUS : PAIR_NORMAL;
+        mvwprintw(l->detail, 3, 2, "ID:       %d", sel->id);
+        wattron(l->detail, COLOR_PAIR(PAIR_TITLE));
+        mvwprintw(l->detail, 4, 2, "Title:");
+        mvwprintw(l->detail, 5, 2, "  %.28s", sel->title);
+        wattroff(l->detail, COLOR_PAIR(PAIR_TITLE));
+        mvwprintw(l->detail, 6, 2, "Priority: %d", sel->priority);
+        wattron(l->detail, COLOR_PAIR(pair));
+        mvwprintw(l->detail, 7, 2, "Status:   %s", sel->done ? "DONE" : "PENDING");
         wattroff(l->detail, COLOR_PAIR(pair));
     }
 }
