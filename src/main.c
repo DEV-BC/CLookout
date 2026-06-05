@@ -1,8 +1,27 @@
+#include <pthread.h>
+#include <unistd.h>
 #include <ncurses.h>
+#include <string.h>
 #include "colors.h"
 #include "layout.h"
 #include "app_data.h"
 #include <cjson/cJSON.h>
+
+static pthread_mutex_t g_clock_mutex = PTHREAD_MUTEX_INITIALIZER;
+static char            g_clock_str[32] = "--:--:--";
+
+static void *clock_thread(void *arg) {
+    (void)arg;
+    while (1) {
+        time_t     now = time(NULL);
+        struct tm *t   = localtime(&now);
+        pthread_mutex_lock(&g_clock_mutex);
+        strftime(g_clock_str, sizeof(g_clock_str), "%H:%M:%S", t);
+        pthread_mutex_unlock(&g_clock_mutex);
+        sleep(1);
+    }
+    return NULL;
+}
 
 static void load_sample_data(AppData *data) {
     const char *json =
@@ -43,6 +62,11 @@ int main(void) {
     noecho();
     cbreak();
     keypad(stdscr, TRUE);
+     timeout(1000);
+
+    pthread_t clock_tid;
+    pthread_create(&clock_tid, NULL, clock_thread, NULL);
+    pthread_detach(clock_tid);
     colors_init();
 
     AppData data = {0};
@@ -51,12 +75,13 @@ int main(void) {
     Layout *l = layout_create();
     if (l == NULL) { endwin(); return 1; }
 
-    layout_draw(l, &data);
+    layout_draw(l, &data, g_clock_str);
     layout_refresh(l);
 
     int ch;
     while ((ch = getch()) != 'q') {
-        switch (ch) {
+        if (ch != ERR) {
+             switch (ch) {
             case 'd': case 'D': l->active = SECTION_DEVICES;   l->cursor = 0; break;
             case 'i': case 'I': l->active = SECTION_INCIDENTS; l->cursor = 0; break;
             case 't': case 'T': l->active = SECTION_TODOS;     l->cursor = 0; break;
@@ -89,8 +114,13 @@ int main(void) {
             if (max > 0 && l->cursor < max - 1) l->cursor++;
             break;
         }
+            }
         }
-        layout_draw(l, &data);
+         char clock_snap[32];
+        pthread_mutex_lock(&g_clock_mutex);
+        strncpy(clock_snap, g_clock_str, sizeof(clock_snap));
+        pthread_mutex_unlock(&g_clock_mutex);
+        layout_draw(l, &data, clock_snap);
         layout_refresh(l);
     }
 

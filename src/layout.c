@@ -44,13 +44,15 @@ Layout *layout_create(void) {
     wbkgd(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
     wbkgd(l->detail,     COLOR_PAIR(PAIR_NORMAL));
 
+    l->status = newwin(1, COLS, LINES - 1, 0);
+    wbkgd(l->status, COLOR_PAIR(PAIR_NORMAL));
     l->active = SECTION_DEVICES;
     l->cursor = 0;
 
     return l;
 }
 
-void layout_draw(const Layout *l, const AppData *data) {
+void layout_draw(const Layout *l, const AppData *data, const char *clock_str) {
     werase(l->nav);
     box(l->nav,        0, 0);
     for (int i = 0; i < 4; i++) {
@@ -155,6 +157,12 @@ void layout_draw(const Layout *l, const AppData *data) {
         mvwprintw(l->detail, 7, 2, "Status:   %s", sel->done ? "DONE" : "PENDING");
         wattroff(l->detail, COLOR_PAIR(pair));
     }
+
+    werase(l->status);
+    wattron(l->status, COLOR_PAIR(PAIR_TITLE));
+    mvwprintw(l->status, 0, 2, "[q] quit  [D/I/T/A] switch");
+    wattroff(l->status, COLOR_PAIR(PAIR_TITLE));
+    mvwprintw(l->status, 0, COLS - 10, "%s", clock_str);
 }
 
 
@@ -163,11 +171,13 @@ void layout_refresh(const Layout *l) {
     wrefresh(l->nav);
     wrefresh(l->main_panel);
     wrefresh(l->detail);
+    wrefresh(l->status);
 }
 
 void layout_free(Layout *l) {
     delwin(l->nav);
     delwin(l->main_panel);
     delwin(l->detail);
+    delwin(l->status);
     free(l);
 }

@@ -18,12 +18,13 @@ typedef struct {
     WINDOW *nav;
     WINDOW *main_panel;
     WINDOW *detail;
+    WINDOW *status;
     Section active;
     int cursor;
 } Layout;
 
 Layout *layout_create(void);
-void layout_draw(const Layout *l, const AppData *data);
+void layout_draw(const Layout *l, const AppData *data, const char *clock_str);
 void layout_refresh(const Layout *l);
 void layout_free(Layout *l);
 #endif
