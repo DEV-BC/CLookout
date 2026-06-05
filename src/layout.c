@@ -58,17 +58,19 @@ void layout_draw(const Layout *l, const AppData *data) {
     mvwprintw(l->main_panel, 1, 2, "%s", section_names[l->active]);
     wattroff(l->main_panel, COLOR_PAIR(PAIR_TITLE));
 
-     if (l->active == SECTION_DEVICES) {
+    if (l->active == SECTION_DEVICES) {
         for (int i = 0; i < data->device_count; i++) {
+            int pair = data->devices[i]->online ? PAIR_NAV : PAIR_STATUS;
             if (i == l->cursor)
-                wattron(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+                wattron(l->main_panel, COLOR_PAIR(pair) | A_REVERSE);
             else
-                wattron(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
+                wattron(l->main_panel, COLOR_PAIR(pair));
             mvwprintw(l->main_panel, i + 3, 2, "%-20s [%s]",
                       data->devices[i]->name,
                       data->devices[i]->online ? "online" : "offline");
-            wattroff(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+            wattroff(l->main_panel, COLOR_PAIR(pair) | A_REVERSE);
         }
+    
     } else if (l->active == SECTION_INCIDENTS) {
         for (int i = 0; i < data->incident_count; i++) {
             if (i == l->cursor)
@@ -94,15 +96,27 @@ void layout_draw(const Layout *l, const AppData *data) {
         }
     }
 
-    werase(l->detail);
+   werase(l->detail);
     box(l->detail, 0, 0);
     wattron(l->detail, COLOR_PAIR(PAIR_TITLE));
-    mvwprintw(l->detail, 1, 2, "Detail");
+    mvwprintw(l->detail, 1, 2, "Device Detail");
     wattroff(l->detail, COLOR_PAIR(PAIR_TITLE));
 
-    attron(COLOR_PAIR(PAIR_STATUS));
-    mvprintw(LINES - 1, 2, " D:Devices  I:Incidents  T:Todos  A:AI  q:Quit ");
-    attroff(COLOR_PAIR(PAIR_STATUS));
+    if (l->active == SECTION_DEVICES && data->device_count > 0) {
+        Device *sel = data->devices[l->cursor];
+        int pair = sel->online ? PAIR_NAV : PAIR_STATUS;
+
+        mvwprintw(l->detail, 3, 2, "ID:     %d", sel->id);
+
+        wattron(l->detail, COLOR_PAIR(PAIR_TITLE));
+        mvwprintw(l->detail, 4, 2, "Name:   %s", sel->name);
+        wattroff(l->detail, COLOR_PAIR(PAIR_TITLE));
+
+        wattron(l->detail, COLOR_PAIR(pair));
+        mvwprintw(l->detail, 5, 2, "Status: %s",
+                  sel->online ? "ONLINE" : "OFFLINE");
+        wattroff(l->detail, COLOR_PAIR(pair));
+    }
 }
 
 
