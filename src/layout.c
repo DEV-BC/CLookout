@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <ncurses.h>
-#include <string.h>
 #include "layout.h"
 #include "app_data.h"
 #include "colors.h"
+#include "chat.h"
+
+
+#define AI_USER_PROMPT "What is a mutex in C? One paragraph."
 
 static const char *section_names[] = {
     "Devices",
@@ -54,6 +57,7 @@ Layout *layout_create(void) {
 }
 
 void layout_draw(const Layout *l, const AppData *data, const char *clock_str, const char *ai_response, int ai_loading) {
+    (void)ai_response;
     werase(l->nav);
     box(l->nav,        0, 0);
     for (int i = 0; i < 4; i++) {
@@ -111,22 +115,28 @@ void layout_draw(const Layout *l, const AppData *data, const char *clock_str, co
             wattroff(l->main_panel, COLOR_PAIR(pair) | A_REVERSE);
         }
     } else if (l->active == SECTION_AI) {
+        int row = 3;
+        int max_w = getmaxx(l->main_panel) - 8;
+        for (int i = 0; i < data->message_count && row < LINES - 5; i++) {
+            ChatMessage *msg = data->messages[i];
+            if (msg->role == ROLE_USER) {
+                wattron(l->main_panel, COLOR_PAIR(PAIR_NAV));
+                mvwprintw(l->main_panel, row++, 2, "You: %.*s", max_w, msg->content);
+                wattroff(l->main_panel, COLOR_PAIR(PAIR_NAV));
+            } else {
+                wattron(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
+                mvwprintw(l->main_panel, row++, 2, " AI: %.*s", max_w, msg->content);
+                wattroff(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
+            }
+        }
         if (ai_loading) {
             wattron(l->main_panel, COLOR_PAIR(PAIR_STATUS));
-            mvwprintw(l->main_panel, 3, 2, "Waiting for response...");
+            mvwprintw(l->main_panel, row++, 2, "You: " AI_USER_PROMPT);
+            mvwprintw(l->main_panel, row,   2, " AI: [streaming...]");
             wattroff(l->main_panel, COLOR_PAIR(PAIR_STATUS));
-        } else if (ai_response[0] != '\0') {
-            int row = 3;
-            int max_w = getmaxx(l->main_panel) - 4;
-            const char *p = ai_response;
-            while (*p && row < LINES - 4) {
-                mvwprintw(l->main_panel, row++, 2, "%.*s", max_w, p);
-                p += max_w;
-                if ((int)(p - ai_response) >= (int)strlen(ai_response)) break;
-            }
-        } else {
+        } else if (data->message_count == 0) {
             wattron(l->main_panel, COLOR_PAIR(PAIR_STATUS));
-            mvwprintw(l->main_panel, 3, 2, "Press Enter to ask a question.");
+            mvwprintw(l->main_panel, row, 2, "Press Enter to ask a question.");
             wattroff(l->main_panel, COLOR_PAIR(PAIR_STATUS));
         }
     }
