@@ -188,11 +188,18 @@ void layout_draw(const Layout *l, const AppData *data, const char *clock_str, co
         wattroff(l->detail, COLOR_PAIR(pair));
     }
 
-    werase(l->status);
-    wattron(l->status, COLOR_PAIR(PAIR_TITLE));
-    mvwprintw(l->status, 0, 2, "[q] quit  [D/I/T/A] switch");
-    wattroff(l->status, COLOR_PAIR(PAIR_TITLE));
-    mvwprintw(l->status, 0, COLS - 10, "%s", clock_str);
+   werase(l->status);
+wattron(l->status, COLOR_PAIR(PAIR_TITLE));
+const char *hints[] = {
+    "[up/dn] nav  [Enter] toggle online",
+    "[up/dn] nav  [Enter] cycle status",
+    "[up/dn] nav  [Space] toggle done",
+    "[Enter] ask AI"
+};
+mvwprintw(l->status, 0, 2, "[q] quit  [D/I/T/A] switch  %s",
+          hints[l->active]);
+wattroff(l->status, COLOR_PAIR(PAIR_TITLE));
+mvwprintw(l->status, 0, COLS - 10, "%s", clock_str);
 }
 
 

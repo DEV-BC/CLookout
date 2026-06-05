@@ -19,10 +19,11 @@ static char            g_clock_str[32] = "--:--:--";
 static pthread_mutex_t g_ai_mutex    = PTHREAD_MUTEX_INITIALIZER;
 static char            g_ai_response[4096] = "";
 static int             g_ai_loading  = 0;
+static volatile int g_clock_stop = 0;
 
 static void *clock_thread(void *arg) {
     (void)arg;
-    while (1) {
+    while (!g_clock_stop) {
         time_t     now = time(NULL);
         struct tm *t   = localtime(&now);
         pthread_mutex_lock(&g_clock_mutex);
@@ -175,7 +176,6 @@ int main(void) {
 
     pthread_t clock_tid;
     pthread_create(&clock_tid, NULL, clock_thread, NULL);
-    pthread_detach(clock_tid);
     colors_init();
 
     AppData data = {0};
@@ -268,6 +268,8 @@ if (a) message_list_push(&data.messages, a);
     for (int i = 0; i < data.incident_count; i++) incident_free(data.incidents[i]);
     for (int i = 0; i < data.todo_count;     i++) todo_free(data.todos[i]);
     message_list_free(&data.messages);
+    g_clock_stop = 1;
+    pthread_join(clock_tid, NULL);
     layout_free(l);
     curl_global_cleanup();
     db_close();
