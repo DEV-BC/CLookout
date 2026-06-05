@@ -24,7 +24,7 @@ typedef struct {
 } Layout;
 
 Layout *layout_create(void);
-void layout_draw(const Layout *l, const AppData *data, const char *clock_str);
+void layout_draw(const Layout *l, const AppData *data, const char *clock_str, const char *ai_response, int ai_loading);
 void layout_refresh(const Layout *l);
 void layout_free(Layout *l);
 #endif

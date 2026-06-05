@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <ncurses.h>
+#include <string.h>
 #include "layout.h"
 #include "app_data.h"
 #include "colors.h"
@@ -52,7 +53,7 @@ Layout *layout_create(void) {
     return l;
 }
 
-void layout_draw(const Layout *l, const AppData *data, const char *clock_str) {
+void layout_draw(const Layout *l, const AppData *data, const char *clock_str, const char *ai_response, int ai_loading) {
     werase(l->nav);
     box(l->nav,        0, 0);
     for (int i = 0; i < 4; i++) {
@@ -108,6 +109,25 @@ void layout_draw(const Layout *l, const AppData *data, const char *clock_str) {
                       data->todos[i]->priority,
                       data->todos[i]->title);
             wattroff(l->main_panel, COLOR_PAIR(pair) | A_REVERSE);
+        }
+    } else if (l->active == SECTION_AI) {
+        if (ai_loading) {
+            wattron(l->main_panel, COLOR_PAIR(PAIR_STATUS));
+            mvwprintw(l->main_panel, 3, 2, "Waiting for response...");
+            wattroff(l->main_panel, COLOR_PAIR(PAIR_STATUS));
+        } else if (ai_response[0] != '\0') {
+            int row = 3;
+            int max_w = getmaxx(l->main_panel) - 4;
+            const char *p = ai_response;
+            while (*p && row < LINES - 4) {
+                mvwprintw(l->main_panel, row++, 2, "%.*s", max_w, p);
+                p += max_w;
+                if ((int)(p - ai_response) >= (int)strlen(ai_response)) break;
+            }
+        } else {
+            wattron(l->main_panel, COLOR_PAIR(PAIR_STATUS));
+            mvwprintw(l->main_panel, 3, 2, "Press Enter to ask a question.");
+            wattroff(l->main_panel, COLOR_PAIR(PAIR_STATUS));
         }
     }
 
