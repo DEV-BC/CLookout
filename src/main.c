@@ -179,6 +179,7 @@ int main(void) {
     colors_init();
 
     AppData data = {0};
+    message_list_init(&data.messages);
     load_sample_data(&data);
     db_load_messages(&data);
 
@@ -232,7 +233,7 @@ int main(void) {
                 data.device_count,
                 data.incident_count,
                 data.todo_count,
-                data.message_count
+                data.messages.count
             };
             int max = counts[l->active];
             if (max > 0 && l->cursor < max - 1) l->cursor++;
@@ -253,14 +254,10 @@ int main(void) {
         if (prev_loading == 1 && ai_loading_snap == 0 && ai_snap[0] != '\0') {
             db_save_message("user", AI_USER_PROMPT);
             db_save_message("assistant", ai_snap);
-            if (data.message_count < MAX_MESSAGES) {
-                ChatMessage *u = chat_message_create(ROLE_USER, AI_USER_PROMPT);
-                if (u) data.messages[data.message_count++] = u;
-            }
-            if (data.message_count < MAX_MESSAGES) {
-                ChatMessage *a = chat_message_create(ROLE_ASSISTANT, ai_snap);
-                if (a) data.messages[data.message_count++] = a;
-            }
+            ChatMessage *u = chat_message_create(ROLE_USER, AI_USER_PROMPT);
+if (u) message_list_push(&data.messages, u);
+ChatMessage *a = chat_message_create(ROLE_ASSISTANT, ai_snap);
+if (a) message_list_push(&data.messages, a);
         }
         prev_loading = ai_loading_snap;
         layout_draw(l, &data, clock_snap, ai_snap, ai_loading_snap);
@@ -270,7 +267,7 @@ int main(void) {
     for (int i = 0; i < data.device_count; i++) device_free(data.devices[i]);
     for (int i = 0; i < data.incident_count; i++) incident_free(data.incidents[i]);
     for (int i = 0; i < data.todo_count;     i++) todo_free(data.todos[i]);
-    for (int i = 0; i < data.message_count; i++) chat_message_free(data.messages[i]);
+    message_list_free(&data.messages);
     layout_free(l);
     curl_global_cleanup();
     db_close();

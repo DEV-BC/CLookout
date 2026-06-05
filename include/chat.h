@@ -18,4 +18,14 @@ ChatMessage *chat_message_create(ChatRole role, const char *content);
 void chat_message_print(const ChatMessage *msg);
 void chat_message_free(ChatMessage *msg);
 
+typedef struct {
+    ChatMessage **data;
+    int           count;
+    int           capacity;
+} MessageList;
+
+void message_list_init(MessageList *list);
+void message_list_push(MessageList *list, ChatMessage *msg);
+void message_list_free(MessageList *list);
+
 #endif

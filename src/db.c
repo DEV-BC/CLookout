@@ -37,14 +37,13 @@ void db_load_messages(AppData *data) {
     const char *sql =
         "SELECT role, content FROM messages ORDER BY id ASC;";
     if (sqlite3_prepare_v2(g_db, sql, -1, &stmt, NULL) != SQLITE_OK) return;
-    while (sqlite3_step(stmt) == SQLITE_ROW
-           && data->message_count < MAX_MESSAGES) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
         const char *role    = (const char *)sqlite3_column_text(stmt, 0);
         const char *content = (const char *)sqlite3_column_text(stmt, 1);
         ChatRole r = strcmp(role, "user") == 0 ? ROLE_USER : ROLE_ASSISTANT;
         ChatMessage *msg = chat_message_create(r, content);
         if (msg != NULL)
-            data->messages[data->message_count++] = msg;
+            message_list_push(&data->messages, msg);
     }
     sqlite3_finalize(stmt);
 }

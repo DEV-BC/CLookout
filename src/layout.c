@@ -117,8 +117,8 @@ void layout_draw(const Layout *l, const AppData *data, const char *clock_str, co
     } else if (l->active == SECTION_AI) {
         int row = 3;
         int max_w = getmaxx(l->main_panel) - 8;
-        for (int i = 0; i < data->message_count && row < LINES - 5; i++) {
-            ChatMessage *msg = data->messages[i];
+        for (int i = 0; i < data->messages.count && row < LINES - 5; i++) {
+            ChatMessage *msg = data->messages.data[i];
             if (msg->role == ROLE_USER) {
                 wattron(l->main_panel, COLOR_PAIR(PAIR_NAV));
                 mvwprintw(l->main_panel, row++, 2, "You: %.*s", max_w, msg->content);
@@ -134,7 +134,7 @@ void layout_draw(const Layout *l, const AppData *data, const char *clock_str, co
             mvwprintw(l->main_panel, row++, 2, "You: " AI_USER_PROMPT);
             mvwprintw(l->main_panel, row,   2, " AI: [streaming...]");
             wattroff(l->main_panel, COLOR_PAIR(PAIR_STATUS));
-        } else if (data->message_count == 0) {
+        } else if (data->messages.count == 0) {
             wattron(l->main_panel, COLOR_PAIR(PAIR_STATUS));
             mvwprintw(l->main_panel, row, 2, "Press Enter to ask a question.");
             wattroff(l->main_panel, COLOR_PAIR(PAIR_STATUS));

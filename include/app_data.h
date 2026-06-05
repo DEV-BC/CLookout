@@ -9,7 +9,7 @@
 #define MAX_DEVICES 64
 #define MAX_INCIDENTS 256
 #define MAX_TODOS 256
-#define MAX_MESSAGES 512
+
 
 typedef struct {
     Device *devices[MAX_DEVICES];
@@ -21,8 +21,7 @@ typedef struct {
     Todo *todos[MAX_TODOS];
     int todo_count;
 
-    ChatMessage *messages[MAX_MESSAGES];
-    int message_count;
+    MessageList messages;
 } AppData;
 
 
