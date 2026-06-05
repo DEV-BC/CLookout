@@ -1,6 +1,7 @@
 #ifndef LAYOUT_H
 #define LAYOUT_H
 
+#include "app_data.h"
 #include <ncurses.h>
 
 #define NAV_WIDTH 20
@@ -22,7 +23,7 @@ typedef struct {
 } Layout;
 
 Layout *layout_create(void);
-void layout_draw(const Layout *l);
+void layout_draw(const Layout *l, const AppData *data);
 void layout_refresh(const Layout *l);
 void layout_free(Layout *l);
 #endif

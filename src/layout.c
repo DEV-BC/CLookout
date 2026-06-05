@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include "layout.h"
+#include "app_data.h"
 #include "colors.h"
 
 static const char *section_names[] = {
@@ -39,7 +40,7 @@ Layout *layout_create(void) {
     return l;
 }
 
-void layout_draw(const Layout *l) {
+void layout_draw(const Layout *l, const AppData *data) {
     werase(l->nav);
     box(l->nav,        0, 0);
     for (int i = 0; i < 4; i++) {
@@ -57,18 +58,40 @@ void layout_draw(const Layout *l) {
     mvwprintw(l->main_panel, 1, 2, "%s", section_names[l->active]);
     wattroff(l->main_panel, COLOR_PAIR(PAIR_TITLE));
 
-    const char *placeholder[] = {
-        "item-01", "item-02", "item-03",
-        "item-04", "item-05", "item-06"
-    };
-    for (int i = 0; i < 6; i++) {
-        if (i == l->cursor) {
-            wattron(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
-        } else {
-            wattron(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
+     if (l->active == SECTION_DEVICES) {
+        for (int i = 0; i < data->device_count; i++) {
+            if (i == l->cursor)
+                wattron(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+            else
+                wattron(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
+            mvwprintw(l->main_panel, i + 3, 2, "%-20s [%s]",
+                      data->devices[i]->name,
+                      data->devices[i]->online ? "online" : "offline");
+            wattroff(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
         }
-        mvwprintw(l->main_panel, i + 3, 2, "%s", placeholder[i]);
-        wattroff(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+    } else if (l->active == SECTION_INCIDENTS) {
+        for (int i = 0; i < data->incident_count; i++) {
+            if (i == l->cursor)
+                wattron(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+            else
+                wattron(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
+            mvwprintw(l->main_panel, i + 3, 2, "%-30s [%s]",
+                      data->incidents[i]->title,
+                      data->incidents[i]->status == STATUS_RESOLVED ? "resolved" : "open");
+            wattroff(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+        }
+    } else if (l->active == SECTION_TODOS) {
+        for (int i = 0; i < data->todo_count; i++) {
+            if (i == l->cursor)
+                wattron(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+            else
+                wattron(l->main_panel, COLOR_PAIR(PAIR_NORMAL));
+            mvwprintw(l->main_panel, i + 3, 2, "[%c] P%d  %s",
+                      data->todos[i]->done ? 'x' : ' ',
+                      data->todos[i]->priority,
+                      data->todos[i]->title);
+            wattroff(l->main_panel, COLOR_PAIR(PAIR_NAV) | A_REVERSE);
+        }
     }
 
     werase(l->detail);

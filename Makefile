@@ -10,7 +10,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	mkdir -p build
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) -lncurses
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) -lncurses -lcjson
 
 build/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
